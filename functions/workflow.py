@@ -1,11 +1,11 @@
 import numpy as np
 from similarity import two_way_similarity
 from helper import *
-
+from display import *
 
 # Functions to execute workflow
 
-def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip = 100,disp=False):
+def calculate_similarity_time(notes,source_id,currTime,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip=100,disp=False):
     """ Function that calls musical similarity on targets generated for a source_id.
         Target snips start at every 100 ms, and has same time length as source.
     
@@ -14,7 +14,6 @@ def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestam
         source_id: indices of note array corresponding to current time snippet (source_id_start>source_id_end) 
                    [source_id_start, source_id_end]
         currTime: time stamp at which we are searching for matches (ms)
-        max_matches: optional param to state how many matches to stop after
         skip: interval at which to iterate over target timestamps
         disp: boolean whether to print each match (defaults True)
     
@@ -84,7 +83,7 @@ def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestam
                 # In all cases where good score and we do not rerun,
                 # Find optimal timestamp and store the match
                 target_time = notes[target_id_start-1][0] - int(mo2) + (currTime - notes[source_id_start-1][0])    
-                if target_time<currTime-5000:
+                if target_time<currTime-timestamp_max_before_source:
                     matches.append([currTime, target_time, score, source_id_start, source_id_end, time_to_index(notes, target_time), target_id_end])
         
         last_id_end = target_id_end
@@ -151,7 +150,7 @@ def find_matches_at_timestamp(i,notes,minNotes,minTime,maxNotes,maxTime,thresh,t
     offset = 500
     numSourceNotes = 0
     sourceTime = 0
-    while sourceTime < maxTime and numSourceNotes < maxNotes:
+    while sourceTime < maxTime: # and numSourceNotes < maxNotes:
         sourceId = get_source_notes(notes, i, minNotes, maxNotes, sourceTime+offset)
         if not sourceId.any():
             break
