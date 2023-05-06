@@ -2,10 +2,13 @@ import numpy as np
 from similarity import two_way_similarity
 from helper import *
 
+from LSH import *
+from collections import defaultdict
+
 
 # Functions to execute workflow
 
-def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip = 100,disp=False):
+def calculate_similarity_time(notes,hashed_notes,n,k,permutation,source_id,currTime,max_matches=None,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip = 100,disp=False):
     """ Function that calls musical similarity on targets generated for a source_id.
         Target snips start at every 100 ms, and has same time length as source.
     
@@ -32,8 +35,9 @@ def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestam
     
     target_start = length_ms
     while target_start < currTime-timestamp_max_before_source:
+        # print("target_start: {}; currTime-timestamp_max_before_source: {}".format(target_start, currTime-timestamp_max_before_source))
         target_end = target_start - length_ms # pick target_end by time length of course snip
-        
+        # print(target_start, currTime-timestamp_max_before_source)
         # finding new end index
         for i in range(last_id_end,len(notes)):
             if notes[i][0] >= target_end:
@@ -52,6 +56,21 @@ def calculate_similarity_time(notes,source_id,currTime,max_matches=None,timestam
             target_start += skip
             continue
         if target_id_end == last_id_end and last_id_start == target_id_start:
+            target_start += skip
+            continue
+
+        sample = notes[source_id_end:source_id_start][:,1]
+        len_of_notes = len(sample)
+        source_hash = get_hash(sample, n, len_of_notes, permutation)[0]
+        # add to the dict
+        if not hashed_notes[len_of_notes]:
+            target_hash = get_hash(notes[:source_end,1], n, len_of_notes, permutation)
+            hashed_notes[len_of_notes] = target_hash
+        else: target_hash = hashed_notes[len_of_notes]
+        indices = get_k_highest_scores(target_hash, source_hash, k)
+        if source_id_start not in indices:
+            last_id_end = target_id_end
+            last_id_start = target_id_start
             target_start += skip
             continue
         
@@ -126,7 +145,7 @@ def get_source_notes(notes, start_time, min_notes, max_notes, min_time):
         
     return np.array([None,None])
 
-def find_matches_at_timestamp(i,notes,minNotes,minTime,maxNotes,maxTime,thresh,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,disp=False):
+def find_matches_at_timestamp(i,n,k,permutation,hashed_notes,notes,minNotes,minTime,maxNotes,maxTime,thresh,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,disp=False):
     """Function that finds similarity from lengths minNotes to maxNotes ...
     
     Args:
@@ -161,7 +180,7 @@ def find_matches_at_timestamp(i,notes,minNotes,minTime,maxNotes,maxTime,thresh,t
         # total time in ms in source snippet
         sourceTime = i - notes[sourceId[1]][0]
         
-        sim = calculate_similarity_time(notes,sourceId,i,timestamp_max_before_source=timestamp_max_before_source,zero_penalty=zero_penalty,length_incentive=length_incentive,max_offset=max_offset,min_dist_const=min_dist_const,disp=disp)
+        sim = calculate_similarity_time(notes,hashed_notes,n,k,permutation,sourceId,i,timestamp_max_before_source=timestamp_max_before_source,zero_penalty=zero_penalty,length_incentive=length_incentive,max_offset=max_offset,min_dist_const=min_dist_const,disp=disp)
         for match in sim:
             match.append(numSourceNotes)
             match.append(sourceTime)
