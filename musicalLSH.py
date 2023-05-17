@@ -7,7 +7,7 @@ import warnings
 warnings.simplefilter(action='ignore')
 
 '''
-The minhash function used in local sensitive hashing.
+The chromahash function used in local sensitive hashing.
 
 data: the input data to be hashed; should be a list
 permutation: the permutatino matrix used; should be the same for source and target with same length
@@ -29,7 +29,7 @@ def chromahash(data, permutation, prime = 614889782588491410, N = 128):
     return vec
 
 '''
-Get the min hash result from data using permutation.
+Get the chromahash hash result from data using permutation.
 
 data: the original data to be hashed; should be a list
 n: size of units for minhash
