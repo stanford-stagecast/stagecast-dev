@@ -3,10 +3,13 @@ from similarity import two_way_similarity
 from helper import *
 from display import *
 
+from LSH import *
+from collections import defaultdict
+
 
 # Functions to execute workflow
 
-def calculate_similarity_time(notes,source_id,currTime,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip=100,disp=False):
+def calculate_similarity_time(notes,hashed_notes,n,k,permutation,source_id,minNotes,currTime,max_matches=None,timestamp_max_before_source=5000,zero_penalty=1,length_incentive=500000,max_offset=600,min_dist_const=400,skip = 100,disp=False):
 
     """ Function that calls musical similarity on targets generated for a source_id.
         Target snips start at every 100 ms, and has same time length as source.
@@ -80,7 +83,8 @@ def calculate_similarity_time(notes,source_id,currTime,timestamp_max_before_sour
                 # Find optimal timestamp and store the match
                 target_time = notes[target_id_start-1][0] - int(mo2) + (currTime - notes[source_id_start-1][0])    
 
-                if target_time<currTime-timestamp_max_before_source:
+                if target_time<currTime-5000:
+                    # print("source_id_start:{}, source_id_end:{}, target_id_start:{}, target_id_end:{}, score:{}".format(source_id_start, source_id_end, target_id_start, target_id_end, score))
 
                     matches.append([currTime, target_time, score, source_id_start, source_id_end, time_to_index(notes, target_time), target_id_end])
 #     while target_start < currTime-timestamp_max_before_source:

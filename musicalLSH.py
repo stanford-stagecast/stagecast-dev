@@ -98,5 +98,6 @@ if __name__ == '__main__':
     for i, w in enumerate(temp[-1]):
         print('Similarity with {}: {}'.format(data[i:i+10], 1 - cosine(w, sampled_hash)))
 
+
     print('selected indices: {}'.format(get_k_highest_scores(temp[-1], sampled_hash,5)))
 
